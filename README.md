@@ -1,6 +1,7 @@
 # amt-ipld
 
 ![CI](https://github.com/eifil/amt-ipld/workflows/CI/badge.svg)
+[![dependencies Status](https://status.david-dm.org/gh/eifil/amt-ipld.svg)](https://david-dm.org/eifil/amt-ipld)
 
 Array Mapped Trie (Persistent Vector) implementation using IPLD.
 
