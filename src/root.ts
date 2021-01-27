@@ -24,12 +24,10 @@ export type Options = {
  */
 export class Root<T = any> {
   readonly bitWidth: number = DEFAULT_BIT_WIDTH
-  height: bigint = 0n
-  count: bigint = 0n
-
-  node: Node<T>
-
-  readonly store: IpldStore
+  private height: bigint = 0n
+  private count: bigint = 0n
+  private node: Node<T>
+  private readonly store: IpldStore
 
   /**
    * Creates a new, empty AMT root with the given IpldStore and options.
@@ -289,20 +287,24 @@ export class Root<T = any> {
     return this.node.firstSetIndex(this.store, this.bitWidth, this.height)
   }
 
-  // Flush saves any unsaved node data and recompacts the in-memory forms of
-  // each node where they have been expanded for operational use.
+  /**
+   * Flush saves any unsaved node data and recompacts the in-memory forms of
+   * each node where they have been expanded for operational use.
+   */
   async flush (): Promise<CID> {
     const nd = await this.node.flush(this.store, this.bitWidth, this.height)
     const root = new internal.Root(this.bitWidth, this.height, this.count, nd)
     return this.store.put(root.encodeCBOR())
   }
 
-  // Len returns the "Count" property that is stored in the root of this AMT.
-  // It's correctness is only guaranteed by the consistency of the build of the
-  // AMT (i.e. this code). A "secure" count would require iterating the entire
-  // tree, but if all nodes are part of a trusted structure (e.g. one where we
-  // control the entire build, or verify all incoming blocks from untrusted
-  // sources) then we ought to be able to say "count" is correct.
+  /**
+   * Returns the "count" property that is stored in the root of this AMT.
+   * It's correctness is only guaranteed by the consistency of the build of the
+   * AMT (i.e. this code). A "secure" count would require iterating the entire
+   * tree, but if all nodes are part of a trusted structure (e.g. one where we
+   * control the entire build, or verify all incoming blocks from untrusted
+   * sources) then we ought to be able to say "count" is correct.
+   */
   get size (): bigint {
     return this.count
   }

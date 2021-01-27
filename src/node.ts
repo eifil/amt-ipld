@@ -57,7 +57,7 @@ export class Node<T = any> {
       for (let x = 0; x < width; x++) {
         // check if this value exists in the bitmap, pull it out of the compacted
         // list if it does
-        if ((nd.bmap[x / 8] & (1 << (x % 8))) > 0) {
+        if ((nd.bmap[Math.floor(x / 8)] & (1 << (x % 8))) > 0) {
           if (i >= nd.values.length) {
             // too many bits were set in the bitmap for the number of values
             // available
@@ -80,7 +80,7 @@ export class Node<T = any> {
       for (let x = 0; x < width; x++) {
         // check if this child link exists in the bitmap, pull it out of the
         // compacted list if it does
-        if ((nd.bmap[x / 8] & (1 << (x % 8))) > 0) {
+        if ((nd.bmap[Math.floor(x / 8)] & (1 << (x % 8))) > 0) {
           if (i >= nd.links.length) {
             // too many bits were set in the bitmap for the number of values
             // available
@@ -397,11 +397,12 @@ export class Node<T = any> {
     if (height === 0n) {
       // leaf node, we're storing values in this node
       for (const [i, val] of this.values.entries()) {
-        if (val === null) {
+        if (val == null) {
           continue
         }
         nd.values.push(val)
-        nd.bmap[i / 8] |= 1 << (i % 8)
+        const byteIndex = Math.floor(i / 8)
+        nd.bmap[byteIndex] = nd.bmap[byteIndex] | 1 << (i % 8)
       }
       return nd
     }
@@ -426,7 +427,8 @@ export class Node<T = any> {
       }
       nd.links.push(ln.cid)
       // set the bit in the bitmap for this position to indicate its presence
-      nd.bmap[i / 8] |= 1 << (i % 8)
+      const byteIndex = Math.floor(i / 8)
+      nd.bmap[byteIndex] = nd.bmap[byteIndex] | 1 << (i % 8)
     }
 
     return nd
