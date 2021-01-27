@@ -1,6 +1,6 @@
 {
   "name": "@eifil/amt-ipld",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Array Mapped Trie (Persistent Vector) implementation using IPLD.",
   "main": "dist/index.js",
   "type": "module",
