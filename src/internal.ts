@@ -1,4 +1,4 @@
-import CID from 'cids'
+import { CID } from 'multiformats'
 
 /**
  * Node represents any node within the AMT, including the root, intermediate
@@ -102,6 +102,6 @@ export class Root {
   }
 
   static decodeCBOR (obj: any): Root {
-    return new Root(obj.BitWidth, obj.Height, obj.Count, Node.decodeCBOR(obj.Node))
+    return new Root(obj.BitWidth, BigInt(obj.Height), BigInt(obj.Count), Node.decodeCBOR(obj.Node))
   }
 }

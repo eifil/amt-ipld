@@ -1,4 +1,4 @@
-import CID from 'cids'
+import * as dagcbor from '@ipld/dag-cbor'
 import { EmptyNodeError, LeafExpectedError, LeafUnexpectedError, LinksAndValuesError, NoValuesError, UndefinedCIDError } from './errors.js'
 import * as internal from './internal.js'
 import { Link } from './link.js'
@@ -91,7 +91,7 @@ export class Node<T = any> {
             throw new UndefinedCIDError()
           }
           // TODO: check link hash function.
-          if (c.code !== CID.codecs['dag-cbor']) {
+          if (c.code !== dagcbor.code) {
             throw new Error(`internal amt nodes must be cbor, found ${c.code}`)
           }
           n.links[x] = new Link(c)
@@ -416,7 +416,7 @@ export class Node<T = any> {
           throw new Error('expected dirty node to be cached')
         }
         const subn = await ln.cached.flush(bs, bitWidth, height - 1n)
-        const c = await bs.put(subn)
+        const c = await bs.put(subn.encodeCBOR())
 
         ln.cid = c
         ln.dirty = false

@@ -1,4 +1,4 @@
-import CID from 'cids'
+import { CID } from 'multiformats'
 
 export interface IpldStore {
   get<V = any> (c: CID): Promise<V | undefined>

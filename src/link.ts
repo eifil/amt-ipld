@@ -1,4 +1,4 @@
-import CID from 'cids'
+import { CID } from 'multiformats'
 import { Node } from './node.js'
 import { IpldStore } from './types.js'
 import * as internal from './internal.js'
