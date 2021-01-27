@@ -1,7 +1,7 @@
 import test from 'ava'
 import { Root as AMT, DEFAULT_BIT_WIDTH } from '../root.js'
 import { memstore } from '../__helpers__/memstore.js'
-import { assertSet, assertGet, assertSize } from '../__helpers__/asserts.js'
+import { assertSet, assertGet, assertSize, assertDelete } from '../__helpers__/asserts.js'
 
 const bitWidth = DEFAULT_BIT_WIDTH
 const numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -38,4 +38,17 @@ test('basic set and get', async t => {
 
   await assertGet(t, clean, 2n, 'foo')
   assertSize(t, clean, 1n)
+})
+
+test('round trip', async t => {
+  const bs = memstore()
+  const a = new AMT<string>(bs)
+  const emptyCid = await a.flush()
+
+  const k = 100000n
+  await assertSet(t, a, k, 'foo')
+  await assertDelete(t, a, k)
+
+  const c = await a.flush()
+  t.true(c.equals(emptyCid))
 })

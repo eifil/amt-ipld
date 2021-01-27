@@ -11,7 +11,7 @@ export function memstore () {
     },
     async put (v: any) {
       const d = dagcbor.encode(v)
-      const hash = await sha256.digest(d)
+      const hash = await sha256.digest(d) // TODO: use blake2b-256
       const k = CID.create(1, dagcbor.code, hash)
       map.set(k.toString(), d)
       return k

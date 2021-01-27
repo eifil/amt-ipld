@@ -3,7 +3,7 @@ import { Root } from '../root.js'
 
 export async function assertDelete (t: Assertions, r: Root<string>, i: bigint) {
   const found = await r.delete(i)
-  t.is(found, true)
+  t.true(found)
   const val = await r.get(i)
   t.is(val, undefined)
 }

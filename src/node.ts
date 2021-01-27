@@ -145,7 +145,17 @@ export class Node<T = any> {
    * Does this node contain any child nodes or values?
    */
   empty (): boolean {
-    return this.links.some(l => l != null) || this.values.some(v => v != null)
+    for (const l of this.links) {
+      if (l != null) {
+        return false
+      }
+    }
+    for (const v of this.values) {
+      if (v != null) {
+        return false
+      }
+    }
+    return true
   }
 
   /**
@@ -181,7 +191,7 @@ export class Node<T = any> {
     // index in the range of 0 to bitWidth^2.
     const nfh = nodesForHeight(bitWidth, height)
     const ln = this.links[Number(i / nfh)]
-    if (ln === null) {
+    if (ln == null) {
       // This can occur at any point in the traversal, not just height=0, it just
       // means that the higher up it occurs that a larger range of indexes in this
       // region don't exist.
@@ -371,7 +381,7 @@ export class Node<T = any> {
     // nodes. We'll do that on return if nothing goes wrong.
     let ln = this.links[Number(i / nfh)]
     if (ln == null) {
-      ln = new Link(undefined, new Node())
+      ln = new Link(undefined, new Node<T>())
     }
     const subn = await ln.load(bs, bitWidth, height - 1n)
 

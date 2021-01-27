@@ -40,7 +40,7 @@ const amt = await AMT.load(store, rootCID, { bitWidth: 8 })
 ### Set and get values
 
 ```ts
-import { Root as AMT } from `@eifil/amt-ipld`
+import { Root as AMT } from '@eifil/amt-ipld'
 
 type Fruit = { name: string }
 
@@ -50,14 +50,14 @@ await fruits.set(0n, { name: 'apple' })
 await fruits.set(1n, { name: 'orange' })
 await fruits.set(3n, { name: 'pear' })
 
-console.log(fruits.size) // 3
+console.log(fruits.size) // 3n
 
 const f0 = await fruits.get(0n)
 const f1 = await fruits.get(1n)
 const f2 = await fruits.get(2n)
 const f3 = await fruits.get(3n)
 
-console.log({ v0, v1, v2, v3 })
+console.log({ f0, f1, f2, f3 })
 // {
 //   f0: { name: 'apple' },
 //   f1: { name: 'orange' },
@@ -73,7 +73,9 @@ for await (const [index, value] of fruits) {
 // { index: 3n, value: { name: 'pear' } }
 
 // now flush unsaved data to the store and return the new root CID
-const rootCID = await amt.flush()
+const rootCID = await fruits.flush()
+console.log(rootCID)
+// CID(bafyreigvhzij2lv5oex4rbfo4obm63re6x4ndlzoctfmisollrzw2lhvlm)
 ```
 
 ## Contribute
