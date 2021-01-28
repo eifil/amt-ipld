@@ -369,3 +369,27 @@ test('entries', async t => {
   }
   t.is(x, indexes.length, 'didnt see enough values')
 })
+
+test('first set index', async t => {
+  const bs = memstore()
+
+  const vals = [0, 1, 5, 1 << bitWidth, 1 << bitWidth + 1, 276, 1234, 62881923]
+  for (const [, v] of vals.entries()) {
+    const a = new AMT<string>(bs)
+    await a.set(BigInt(v), `${v}`)
+
+    let fsi = await a.firstSetIndex()
+    t.is(fsi, BigInt(v), 'got wrong index out')
+
+    const rc = await a.flush()
+    const after = await AMT.load(bs, rc)
+
+    fsi = await after.firstSetIndex()
+    t.is(fsi, BigInt(v), 'got wrong index out after serialization')
+
+    const found = await after.delete(BigInt(v))
+    t.true(found)
+
+    await t.throwsAsync(() => after.firstSetIndex())
+  }
+})
