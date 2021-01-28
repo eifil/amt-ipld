@@ -1,5 +1,6 @@
 import { CID } from 'multiformats'
-import { sha256 } from 'multiformats/hashes/sha2'
+// @ts-ignore
+import { blake2b256 } from '@multiformats/blake2/blake2b'
 import * as dagcbor from '@ipld/dag-cbor'
 
 export function memstore () {
@@ -11,7 +12,7 @@ export function memstore () {
     },
     async put (v: any) {
       const d = dagcbor.encode(v)
-      const hash = await sha256.digest(d) // TODO: use blake2b-256
+      const hash = await blake2b256.digest(d)
       const k = CID.create(1, dagcbor.code, hash)
       map.set(k.toString(), d)
       return k

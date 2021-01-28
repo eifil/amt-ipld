@@ -42,13 +42,13 @@ export class Node {
   }
 
   encodeCBOR () {
-    return { Bmap: this.bmap, Links: this.links, Values: this.values }
+    return [this.bmap, this.links, this.values]
   }
 
   static decodeCBOR (obj: any): Node {
-    const nd = new Node(obj.Bmap)
-    nd.links = obj.Links ?? []
-    nd.values = obj.Values ?? []
+    const nd = new Node(obj[0])
+    nd.links = obj[1] ?? []
+    nd.values = obj[2] ?? []
     return nd
   }
 }
@@ -98,10 +98,10 @@ export class Root {
   }
 
   encodeCBOR () {
-    return { BitWidth: this.bitWidth, Height: this.height, Count: this.count, Node: this.node.encodeCBOR() }
+    return [this.bitWidth, this.height, this.count, this.node.encodeCBOR()]
   }
 
   static decodeCBOR (obj: any): Root {
-    return new Root(obj.BitWidth, BigInt(obj.Height), BigInt(obj.Count), Node.decodeCBOR(obj.Node))
+    return new Root(obj[0], BigInt(obj[1]), BigInt(obj[2]), Node.decodeCBOR(obj[3]))
   }
 }
