@@ -1,30 +1,11 @@
 import test from 'ava'
 import { Root as AMT, DEFAULT_BIT_WIDTH, MAX_INDEX } from '../root.js'
+import * as internal from '../internal.js'
 import { memstore } from '../__helpers__/memstore.js'
 import { assertSet, assertGet, assertSize, assertDelete } from '../__helpers__/asserts.js'
 import { randInt } from '../__helpers__/random.js'
 
 const bitWidth = DEFAULT_BIT_WIDTH
-const numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-
-test('default config', async t => {
-  const bs = memstore()
-  const a = new AMT(bs)
-  t.is(a.bitWidth, bitWidth)
-
-  const c = await AMT.fromArray(bs, numbers)
-  const as = await AMT.load(bs, c)
-  t.is(as.bitWidth, bitWidth)
-})
-
-test('explicit bitwidth', async t => {
-  const bs = memstore()
-  const a = new AMT(bs, { bitWidth: 4 })
-  t.is(a.bitWidth, 4)
-
-  const c = await AMT.fromArray(bs, numbers, { bitWidth: 4 })
-  await t.throwsAsync(() => AMT.load(bs, c))
-})
 
 test('basic set and get', async t => {
   const bs = memstore()
@@ -116,41 +97,6 @@ test('insert a bunch', async t => {
   }
 
   await assertSize(t, na, num)
-})
-
-test('entries without flush', async t => {
-  const bs = memstore()
-
-  for (const indexes of [
-    [0n, 1n, 2n, 3n, 4n, 5n, 6n, 7n],
-    [8n],
-    [8n, 9n, 64n],
-    [64n, 8n, 9n]
-  ]) {
-    const amt = new AMT<string>(bs)
-    const set1 = new Set<bigint>()
-    const set2 = new Set<bigint>()
-
-    for (const index of indexes) {
-      await amt.set(index, '')
-      set1.add(index)
-      set2.add(index)
-    }
-    t.is(BigInt(set1.size), amt.size)
-
-    for await (const i of amt.keys()) {
-      set1.delete(i)
-    }
-    t.is(set1.size, 0)
-
-    // ensure it still works after flush
-    await amt.flush()
-
-    for await (const i of amt.keys()) {
-      set2.delete(i)
-    }
-    t.is(set2.size, 0)
-  }
 })
 
 test('chaos', async t => {
@@ -256,120 +202,6 @@ test('insert a bunch with delete', async t => {
   }
 })
 
-test('delete first entry', async t => {
-  const bs = memstore()
-  const a = new AMT<string>(bs)
-
-  await assertSet(t, a, 0n, 'cat')
-  await assertSet(t, a, 27n, 'cat')
-
-  await assertDelete(t, a, 27n)
-
-  const c = await a.flush()
-  const na = await AMT.load(bs, c)
-
-  assertSize(t, na, 1n)
-})
-
-test('delete', async t => {
-  const bs = memstore()
-  const a = new AMT<string>(bs)
-
-  // Check that deleting out of range of the current AMT returns not found
-  const found = await a.delete(200n)
-  t.false(found)
-
-  await assertSet(t, a, 0n, 'cat')
-  await assertSet(t, a, 1n, 'cat')
-  await assertSet(t, a, 2n, 'cat')
-  await assertSet(t, a, 3n, 'cat')
-
-  await assertDelete(t, a, 1n)
-
-  await assertGet(t, a, 0n, 'cat')
-  await assertGet(t, a, 2n, 'cat')
-  await assertGet(t, a, 3n, 'cat')
-
-  await assertDelete(t, a, 0n)
-  await assertDelete(t, a, 2n)
-  await assertDelete(t, a, 3n)
-
-  assertSize(t, a, 0n)
-
-  await assertSet(t, a, 23n, 'dog')
-  await assertSet(t, a, 24n, 'dog')
-
-  await assertDelete(t, a, 23n)
-
-  assertSize(t, a, 1n)
-
-  const c = await a.flush()
-  const na = await AMT.load(bs, c)
-
-  assertSize(t, na, 1n)
-
-  const a2 = new AMT(bs)
-  await assertSet(t, a2, 24n, 'dog')
-
-  const a2c = await a2.flush()
-
-  t.true(c.equals(a2c))
-})
-
-test('delete reduce height', async t => {
-  const bs = memstore()
-  const a = new AMT<string>(bs)
-
-  await assertSet(t, a, 1n, 'thing')
-
-  const c1 = await a.flush()
-
-  await assertSet(t, a, 37n, 'other')
-
-  const c2 = await a.flush()
-  const a2 = await AMT.load(bs, c2)
-
-  await assertDelete(t, a2, 37n)
-  assertSize(t, a2, 1n)
-
-  const c3 = await a2.flush()
-  t.true(c1.equals(c3), 'structures did not match after insert/delete')
-})
-
-test('entries', async t => {
-  const bs = memstore()
-  const a = new AMT<string>(bs)
-
-  const indexes = []
-  for (let i = 0; i < 10000; i++) {
-    if (randInt(0, 2) === 0) {
-      indexes.push(i)
-    }
-  }
-
-  for (const i of indexes) {
-    await a.set(BigInt(i), 'value')
-  }
-
-  for (const i of indexes) {
-    await assertGet(t, a, BigInt(i), 'value')
-  }
-
-  assertSize(t, a, BigInt(indexes.length))
-
-  const c = await a.flush()
-  const na = await AMT.load(bs, c)
-
-  assertSize(t, na, BigInt(indexes.length))
-
-  let x = 0
-  for await (const i of na.keys()) {
-    t.is(i, BigInt(indexes[x]), 'got wrong index')
-    x++
-  }
-  t.is(x, indexes.length, 'didnt see enough values')
-})
-
 test('first set index', async t => {
   const bs = memstore()
 
@@ -414,4 +246,15 @@ test('empty CID stability', async t => {
 
   const c3 = await a.flush()
   t.true(c1.equals(c3))
+})
+
+test('bad bitfield', async t => {
+  const bs = memstore()
+  const subnode = await bs.put(new internal.Node(new Uint8Array()).encodeCBOR())
+
+  const root = new internal.Root(bitWidth, 10n, 10n, new internal.Node(new Uint8Array([255])))
+  root.node.links.push(subnode)
+  const c = await bs.put(root.encodeCBOR())
+
+  await t.throwsAsync(() => AMT.load(bs, c))
 })
