@@ -6,6 +6,7 @@
     "outDir": "./dist"
   },
   "exclude": [
-    "./src/**/*.test.ts"
+    "./src/**/__tests__/*.ts",
+    "./src/**/__helpers__/*.ts"
   ]
 }
