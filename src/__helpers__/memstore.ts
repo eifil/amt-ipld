@@ -5,7 +5,7 @@ import * as dagcbor from '@ipld/dag-cbor'
 export function memstore () {
   const map = new Map<string, Uint8Array>()
   return {
-    async get (k: CID) {
+    get (k: CID) {
       const d = map.get(k.toString())
       return d ? dagcbor.decode(d) : d
     },
