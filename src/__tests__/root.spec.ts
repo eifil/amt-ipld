@@ -393,3 +393,25 @@ test('first set index', async t => {
     await t.throwsAsync(() => after.firstSetIndex())
   }
 })
+
+test('empty CID stability', async t => {
+  const bs = memstore()
+  const a = new AMT<string>(bs)
+
+  const c1 = await a.flush()
+
+  // iterating array should not affect its cid
+  for await (const _ of a) { // eslint-disable-line no-unused-vars
+    // noop
+  }
+
+  const c2 = await a.flush()
+  t.true(c1.equals(c2))
+
+  // adding and removing and item should not affect its cid
+  await a.set(0n, '')
+  await a.delete(0n)
+
+  const c3 = await a.flush()
+  t.true(c1.equals(c3))
+})
