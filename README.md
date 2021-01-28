@@ -48,7 +48,7 @@ import { Root as AMT } from '@eifil/amt-ipld'
 
 type Fruit = { name: string }
 
-const fruits = new AMT<MyValue>(store, { bitWidth: 8 })
+const fruits = new AMT<Fruit>(store, { bitWidth: 8 })
 
 await fruits.set(0n, { name: 'apple' })
 await fruits.set(1n, { name: 'orange' })
