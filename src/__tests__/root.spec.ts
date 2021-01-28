@@ -335,3 +335,37 @@ test('delete reduce height', async t => {
   const c3 = await a2.flush()
   t.true(c1.equals(c3), 'structures did not match after insert/delete')
 })
+
+test('entries', async t => {
+  const bs = memstore()
+  const a = new AMT<string>(bs)
+
+  const indexes = []
+  for (let i = 0; i < 10000; i++) {
+    if (randInt(0, 2) === 0) {
+      indexes.push(i)
+    }
+  }
+
+  for (const i of indexes) {
+    await a.set(BigInt(i), 'value')
+  }
+
+  for (const i of indexes) {
+    await assertGet(t, a, BigInt(i), 'value')
+  }
+
+  assertSize(t, a, BigInt(indexes.length))
+
+  const c = await a.flush()
+  const na = await AMT.load(bs, c)
+
+  assertSize(t, na, BigInt(indexes.length))
+
+  let x = 0
+  for await (const [i] of na) {
+    t.is(i, BigInt(indexes[x]), 'got wrong index')
+    x++
+  }
+  t.is(x, indexes.length, 'didnt see enough values')
+})
