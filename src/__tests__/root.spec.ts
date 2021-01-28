@@ -1,5 +1,5 @@
 import test from 'ava'
-import { Root as AMT, DEFAULT_BIT_WIDTH } from '../root.js'
+import { Root as AMT, DEFAULT_BIT_WIDTH, MAX_INDEX } from '../root.js'
 import { memstore } from '../__helpers__/memstore.js'
 import { assertSet, assertGet, assertSize, assertDelete } from '../__helpers__/asserts.js'
 
@@ -51,4 +51,14 @@ test('round trip', async t => {
 
   const c = await a.flush()
   t.true(c.equals(emptyCid))
+})
+
+test('max range', async t => {
+  const bs = memstore()
+  const a = new AMT<string>(bs)
+
+  await t.notThrowsAsync(() => a.set(MAX_INDEX, 'what is up 1'))
+  const err = await t.throwsAsync(() => a.set(MAX_INDEX + 1n, 'what is up 2'))
+
+  t.is(err.message, `index ${MAX_INDEX + 1n} is out of range for the amt`)
 })
