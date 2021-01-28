@@ -12,6 +12,9 @@
     "lint": "standard 'src/**/*.ts'",
     "coverage": "c8 npm test && c8 report --reporter lcov --reporter html"
   },
+  "files": [
+    "dist"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/eifil/amt-ipld.git"
