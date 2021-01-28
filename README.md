@@ -6,6 +6,8 @@
 
 Array Mapped Trie (Persistent Vector) implementation using IPLD.
 
+Aims to be conformant with [github.com/filecoin-project/go-amt-ipld](https://github.com/filecoin-project/go-amt-ipld).
+
 ## Install
 
 ```sh

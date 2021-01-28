@@ -1,9 +1,13 @@
-import * as dagcbor from '@ipld/dag-cbor'
 import { EmptyNodeError, LeafExpectedError, LeafUnexpectedError, LinksAndValuesError, NoValuesError, UndefinedCIDError } from './errors.js'
 import * as internal from './internal.js'
 import { Link } from './link.js'
 import { CBORDecoder, IpldStore } from './types.js'
 import { nodesForHeight } from './util.js'
+
+/**
+ * Codec for IPLD dag-cbor.
+ */
+const DAG_CBOR = 113
 
 /**
  * the number of bytes required such that there is a single bit for each element
@@ -91,7 +95,7 @@ export class Node<T = any> {
             throw new UndefinedCIDError()
           }
           // TODO: check link hash function.
-          if (c.code !== dagcbor.code) {
+          if (c.code !== DAG_CBOR) {
             throw new Error(`internal amt nodes must be cbor, found ${c.code}`)
           }
           n.links[x] = new Link(c)
