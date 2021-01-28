@@ -67,7 +67,7 @@ console.log({ f0, f1, f2, f3 })
 //   f3: { name: 'pear' }
 // }
 
-for await (const [index, value] of fruits) {
+for await (const [index, value] of fruits.entries()) {
   console.log({ index, value })
 }
 // { index: 0n, value: { name: 'apple' } }

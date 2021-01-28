@@ -138,7 +138,7 @@ test('entries without flush', async t => {
     }
     t.is(BigInt(set1.size), amt.size)
 
-    for await (const [i] of amt) {
+    for await (const i of amt.keys()) {
       set1.delete(i)
     }
     t.is(set1.size, 0)
@@ -146,7 +146,7 @@ test('entries without flush', async t => {
     // ensure it still works after flush
     await amt.flush()
 
-    for await (const [i] of amt) {
+    for await (const i of amt.keys()) {
       set2.delete(i)
     }
     t.is(set2.size, 0)
@@ -363,7 +363,7 @@ test('entries', async t => {
   assertSize(t, na, BigInt(indexes.length))
 
   let x = 0
-  for await (const [i] of na) {
+  for await (const i of na.keys()) {
     t.is(i, BigInt(indexes[x]), 'got wrong index')
     x++
   }

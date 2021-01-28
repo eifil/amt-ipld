@@ -268,7 +268,7 @@ export class Root<T = any> {
   }
 
   [Symbol.asyncIterator] () {
-    return this.entries()
+    return this.values()
   }
 
   /**
@@ -276,6 +276,24 @@ export class Root<T = any> {
    */
   entries (decoder?: CBORDecoder<T>) {
     return this.node.entries(this.store, this.bitWidth, this.height, decoder)
+  }
+
+  /**
+   * Returns an AsyncGenerator that iterates over the keys of the entire AMT.
+   */
+  async * keys () {
+    for await (const kv of this.entries()) {
+      yield kv[0]
+    }
+  }
+
+  /**
+   * Returns an AsyncGenerator that iterates over the values of the entire AMT.
+   */
+  async * values (decoder?: CBORDecoder<T>) {
+    for await (const kv of this.entries(decoder)) {
+      yield kv[1]
+    }
   }
 
   /**
