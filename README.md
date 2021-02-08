@@ -82,6 +82,35 @@ console.log(rootCID)
 // CID(bafyreigvhzij2lv5oex4rbfo4obm63re6x4ndlzoctfmisollrzw2lhvlm)
 ```
 
+### Custom CBOR encoding/decoding
+
+Add an `encodeCBOR` method to your values, and pass a decoder to the options (an object with a `decodeCBOR` function) to enable a custom encoding format for your values.
+
+```ts
+import { Root as AMT } from '@eifil/amt-ipld'
+
+class Fruit {
+  name: string
+  constructor (name: string) {
+    this.name = name
+  }
+  encodeCBOR () {
+    return [this.name] // encode as a compact array
+  }
+  static decodeCBOR (obj: any) {
+    return new Fruit(obj[0]) // re-hydrate a Fruit instance from array format
+  }
+}
+
+const fruits = new AMT<Fruit>(store, { bitWidth: 8, decoder: Fruit })
+
+await fruits.set(0n, new Fruit('apple'))
+await fruits.flush()
+
+const f0 = await fruits.get(0n)
+console.log(f0) // Fruit { name: 'apple' }
+```
+
 ## Contribute
 
 Feel free to dive in! [Open an issue](https://github.com/eifil/amt-ipld/issues/new) or submit PRs.

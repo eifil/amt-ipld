@@ -14,32 +14,33 @@ import { InvalidCountError } from './errors.js'
 export const MAX_INDEX = MAX_UINT64 - 1n
 export const DEFAULT_BIT_WIDTH = 3
 
-export type Options = {
+export type Options<V> = {
   bitWidth?: number
+  decoder?: CBORDecoder<V>
 }
 
 /**
  * Root is described in more detail in its internal serialized form,
  * internal.Root
  */
-export class Root<T = any> {
+export class Root<V> {
   readonly bitWidth: number = DEFAULT_BIT_WIDTH
   private height: bigint = 0n
   private count: bigint = 0n
-  private node: Node<T>
+  private node: Node<V>
   private readonly store: IpldStore
 
   /**
    * Creates a new, empty AMT root with the given IpldStore and options.
    */
-  constructor (bs: IpldStore, options: Options = {}) {
+  constructor (bs: IpldStore, options: Options<V> = {}) {
     this.store = bs
     if (options.bitWidth) {
       if (typeof options.bitWidth !== 'number') throw new Error('non-numeric bit width')
       if (options.bitWidth < 1) throw new Error(`bit width must be at least 2, is ${options.bitWidth}`)
       this.bitWidth = options.bitWidth
     }
-    this.node = new Node<T>()
+    this.node = new Node<V>([], options.decoder)
   }
 
   /**
@@ -48,7 +49,7 @@ export class Root<T = any> {
    * does not exist within the IpldStore. If the given options, or their defaults,
    * do not match the AMT found at the given CID, an error will be returned.
    */
-  static async load<T = any> (bs: IpldStore, c: CID, options: Options = {}): Promise<Root<T>> {
+  static async load<V> (bs: IpldStore, c: CID, options: Options<V> = {}): Promise<Root<V>> {
     const ir = internal.Root.decodeCBOR(await bs.get(c))
 
     options.bitWidth = options.bitWidth ?? DEFAULT_BIT_WIDTH
@@ -82,10 +83,10 @@ export class Root<T = any> {
       throw new Error(`failed to load AMT: not tall enough (${ir.height}) for count (${ir.count})`)
     }
 
-    const r = new Root<T>(bs, options)
+    const r = new Root<V>(bs, options)
     r.height = ir.height
     r.count = ir.count
-    r.node = Node.fromInternal(ir.node, options.bitWidth, ir.height === 0n, ir.height === 0n)
+    r.node = Node.fromInternal<V>(ir.node, options.bitWidth, ir.height === 0n, ir.height === 0n, options.decoder)
 
     return r
   }
@@ -95,8 +96,8 @@ export class Root<T = any> {
    * provided. Indexes from the array are used as the indexes for the same
    * values in the AMT.
    */
-  static async fromArray (bs: IpldStore, vals: any[], options?: Options): Promise<CID> {
-    const r = new Root(bs, options)
+  static async fromArray<V = any> (bs: IpldStore, vals: V[], options?: Options<V>): Promise<CID> {
+    const r = new Root<V>(bs, options)
     await r.batchSet(vals)
     return r.flush()
   }
@@ -121,7 +122,7 @@ export class Root<T = any> {
    * a height of at least 3. Where an AMT has a height less than 3, additional
    * nodes will be added until the height is 3.
    */
-  async set (i: bigint, val: T) {
+  async set (i: bigint, val: V) {
     if (i > MAX_INDEX) {
       throw new RangeError(`index ${i} is out of range for the amt`)
     }
@@ -162,7 +163,7 @@ export class Root<T = any> {
    * This is currently a convenience method and does not perform optimizations
    * above iterative Set calls for each entry.
    */
-  async batchSet (vals: any[]) {
+  async batchSet (vals: V[]) {
     // TODO: there are more optimized ways of doing this method
     for (const i in vals) {
       await this.set(BigInt(i), vals[i])
@@ -176,7 +177,7 @@ export class Root<T = any> {
    * deserializes the value into that interface. Returns undefined if the index
    * is not set.
    */
-  async get (i: bigint, decoder?: CBORDecoder<T>): Promise<T | undefined> {
+  async get (i: bigint): Promise<V | undefined> {
     if (i > MAX_INDEX) {
       throw new RangeError(`index ${i} is out of range for the amt`)
     }
@@ -185,7 +186,7 @@ export class Root<T = any> {
     if (i >= nodesForHeight(this.bitWidth, this.height + 1n)) {
       return
     }
-    return this.node.get(this.store, this.bitWidth, this.height, i, decoder)
+    return this.node.get(this.store, this.bitWidth, this.height, i)
   }
 
   /**
@@ -274,8 +275,8 @@ export class Root<T = any> {
   /**
    * Returns an AsyncGenerator that iterates over the entire AMT.
    */
-  entries (decoder?: CBORDecoder<T>) {
-    return this.node.entries(this.store, this.bitWidth, this.height, decoder)
+  entries () {
+    return this.node.entries(this.store, this.bitWidth, this.height)
   }
 
   /**
@@ -290,8 +291,8 @@ export class Root<T = any> {
   /**
    * Returns an AsyncGenerator that iterates over the values of the entire AMT.
    */
-  async * values (decoder?: CBORDecoder<T>) {
-    for await (const kv of this.entries(decoder)) {
+  async * values () {
+    for await (const kv of this.entries()) {
       yield kv[1]
     }
   }

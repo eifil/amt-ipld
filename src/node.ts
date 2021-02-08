@@ -25,12 +25,14 @@ function bmapBytes (bitWidth: number): number {
  * or Links (non-leaf) for ease of addressing.
  * Both properties may be nil if the node is empty (a root node).
  */
-export class Node<T = any> {
-  links: Link<T>[] = []
-  values: T[] = []
+export class Node<V> {
+  links: Link<V>[] = []
+  values: V[] = []
+  private readonly decoder?: CBORDecoder<V>
 
-  constructor (links: Link<T>[] = []) {
+  constructor (links: Link<V>[] = [], decoder?: CBORDecoder<V>) {
     this.links = links
+    this.decoder = decoder
   }
 
   /**
@@ -39,7 +41,7 @@ export class Node<T = any> {
    * arrays, while node uses the expanded form. This method performs the expansion
    * such that we can use simple addressing of this node's child elements.
    */
-  static fromInternal (nd: internal.Node, bitWidth: number, allowEmpty: boolean, expectLeaf: boolean): Node {
+  static fromInternal<V> (nd: internal.Node, bitWidth: number, allowEmpty: boolean, expectLeaf: boolean, decoder?: CBORDecoder<V>): Node<V> {
     if (nd.links.length && nd.values.length) {
       // malformed AMT, a node cannot be both leaf and non-leaf
       throw new LinksAndValuesError()
@@ -53,7 +55,7 @@ export class Node<T = any> {
 
     const width = 1 << bitWidth
     let i = 0
-    const n = new Node()
+    const n = new Node<V>([], decoder)
     if (nd.values.length) { // leaf node, height=0
       if (!expectLeaf) {
         throw new LeafUnexpectedError()
@@ -134,7 +136,7 @@ export class Node<T = any> {
     }
 
     // only one child, collapse it.
-    const subn = await this.links[0].load(bs, bitWidth, height - 1n)
+    const subn = await this.links[0].load(bs, bitWidth, height - 1n, this.decoder)
 
     // Collapse recursively.
     const newHeight = await subn.collapse(bs, bitWidth, height - 1n)
@@ -170,14 +172,14 @@ export class Node<T = any> {
    * doesn't exist, so we don't need to do full height traversal for many cases
    * where we don't have that index.
    */
-  async get (bs: IpldStore, bitWidth: number, height: bigint, i: bigint, decoder?: CBORDecoder<T>): Promise<T | undefined> {
+  async get (bs: IpldStore, bitWidth: number, height: bigint, i: bigint): Promise<V | undefined> {
     // height=0 means we're operating on a leaf node where the entries themselves
     // are stores, we have a `set` so it must exist if the node is correctly
     // formed
     if (height === 0n) {
       const d = this.values[Number(i)]
       if (d == null) return d
-      return decoder ? decoder.decodeCBOR(d) : d
+      return this.decoder ? this.decoder.decodeCBOR(d) : d
     }
 
     // Non-leaf case where we need to navigate further down toward the correct
@@ -202,14 +204,14 @@ export class Node<T = any> {
       return ln
     }
 
-    const subn = await ln.load(bs, bitWidth, height - 1n)
+    const subn = await ln.load(bs, bitWidth, height - 1n, this.decoder)
 
     // `i%nfh` discards index information for this height so the child only gets
     // the part of the index that is relevant for it.
     // e.g. get(50) at height=1 for width=8 would be 50%8=2, i.e. the child will
     // be asked to get(2) and it will have leaf nodes (because it's height=0) so
     // the actual value will be at index=2 of its values array.
-    return subn.get(bs, bitWidth, height - 1n, i % nfh, decoder)
+    return subn.get(bs, bitWidth, height - 1n, i % nfh)
   }
 
   /**
@@ -239,7 +241,7 @@ export class Node<T = any> {
 
     // we're at a non-leaf node, so navigate down to the appropriate child and
     // continue
-    const subn = await ln.load(bs, bitWidth, height - 1n)
+    const subn = await ln.load(bs, bitWidth, height - 1n, this.decoder)
 
     // see get() documentation for how the i%... calculation trims the index down
     // to only that which is applicable for the height below
@@ -268,7 +270,7 @@ export class Node<T = any> {
   // figure out the appropriate 'index', since indexes are not stored with values
   // and can only be determined by knowing how far a leaf node is removed from
   // the left-most leaf node.
-  async * entries (bs: IpldStore, bitWidth: number, height: bigint, decoder?: CBORDecoder<T>, start: bigint = 0n, offset: bigint = 0n): AsyncGenerator<[bigint, T]> {
+  async * entries (bs: IpldStore, bitWidth: number, height: bigint, start: bigint = 0n, offset: bigint = 0n): AsyncGenerator<[bigint, V]> {
     if (height === 0n) {
       // height=0 means we're at leaf nodes and get to use our callback
       for (const [i, v] of this.values.entries()) {
@@ -305,11 +307,11 @@ export class Node<T = any> {
         continue
       }
 
-      const subn = await ln.load(bs, bitWidth, height - 1n)
+      const subn = await ln.load(bs, bitWidth, height - 1n, this.decoder)
 
       // recurse into the child node, providing 'offs' to tell it where it's
       // located in the tree
-      yield * subn.entries(bs, bitWidth, height - 1n, decoder, start, offs)
+      yield * subn.entries(bs, bitWidth, height - 1n, start, offs)
     }
   }
 
@@ -339,7 +341,7 @@ export class Node<T = any> {
         continue // nothing here.
       }
 
-      const subn = await ln.load(bs, bitWidth, height - 1n)
+      const subn = await ln.load(bs, bitWidth, height - 1n, this.decoder)
       const ix = await subn.firstSetIndex(bs, bitWidth, height - 1n)
 
       // 'ix' is the child's understanding of it's left-most set index, we have
@@ -367,7 +369,7 @@ export class Node<T = any> {
    * one was overwritten. This is useful for adjusting the Count in the root node
    * when we reverse back out of the calls.
    */
-  async set (bs: IpldStore, bitWidth: number, height: bigint, i: bigint, val: T): Promise<boolean> {
+  async set (bs: IpldStore, bitWidth: number, height: bigint, i: bigint, val: V): Promise<boolean> {
     if (height === 0n) {
       // we're at the leaf, we can either overwrite the value that already exists
       // or set a new one if there is none
@@ -385,9 +387,9 @@ export class Node<T = any> {
     // nodes. We'll do that on return if nothing goes wrong.
     let ln = this.links[Number(i / nfh)]
     if (ln == null) {
-      ln = new Link(undefined, new Node<T>())
+      ln = new Link(undefined, new Node<V>([], this.decoder))
     }
-    const subn = await ln.load(bs, bitWidth, height - 1n)
+    const subn = await ln.load(bs, bitWidth, height - 1n, this.decoder)
 
     // see get() documentation for how the i%... calculation trims the index down
     // to only that which is applicable for the height below
