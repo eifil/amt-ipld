@@ -287,7 +287,7 @@ export class Node<V> {
 
         // use 'offset' to determine the actual index for this element, it
         // tells us how distant we are from the left-most leaf node
-        yield [ix, v]
+        yield [ix, this.decoder ? this.decoder.decodeCBOR(v) : v]
       }
       return
     }
