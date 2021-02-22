@@ -1,14 +1,14 @@
 import test from 'ava'
+import { MemCborStore } from '@eifil/ipld-cbor'
 import { Root as AMT, DEFAULT_BIT_WIDTH, MAX_INDEX } from '../root.js'
 import * as internal from '../internal.js'
-import { memstore } from '../__helpers__/memstore.js'
 import { assertSet, assertGet, assertSize, assertDelete } from '../__helpers__/asserts.js'
 import { randInt } from '../__helpers__/random.js'
 
 const bitWidth = DEFAULT_BIT_WIDTH
 
 test('basic set and get', async t => {
-  const bs = memstore()
+  const bs = new MemCborStore()
   const a = new AMT<string>(bs)
 
   await assertSet(t, a, 2n, 'foo')
@@ -23,7 +23,7 @@ test('basic set and get', async t => {
 })
 
 test('round trip', async t => {
-  const bs = memstore()
+  const bs = new MemCborStore()
   const a = new AMT<string>(bs)
   const emptyCid = await a.flush()
 
@@ -36,7 +36,7 @@ test('round trip', async t => {
 })
 
 test('max range', async t => {
-  const bs = memstore()
+  const bs = new MemCborStore()
   const a = new AMT<string>(bs)
 
   await t.notThrowsAsync(() => a.set(MAX_INDEX, 'what is up 1'))
@@ -46,7 +46,7 @@ test('max range', async t => {
 })
 
 test('max range with bit width 11', async t => {
-  const bs = memstore()
+  const bs = new MemCborStore()
   const a = new AMT<string>(bs, { bitWidth: 11 })
 
   await t.notThrowsAsync(() => a.set(MAX_INDEX, 'what is up 1'))
@@ -56,7 +56,7 @@ test('max range with bit width 11', async t => {
 })
 
 test('expand', async t => {
-  const bs = memstore()
+  const bs = new MemCborStore()
   const a = new AMT<string>(bs)
 
   await assertSet(t, a, 2n, 'foo')
@@ -76,7 +76,7 @@ test('expand', async t => {
 })
 
 test('chaos', async t => {
-  const bs = memstore()
+  const bs = new MemCborStore()
 
   let a = new AMT<string>(bs)
   let c = await a.flush()
@@ -123,7 +123,7 @@ test('chaos', async t => {
 })
 
 test('first set index', async t => {
-  const bs = memstore()
+  const bs = new MemCborStore()
 
   const vals = [0, 1, 5, 1 << bitWidth, 1 << bitWidth + 1, 276, 1234, 62881923]
   for (const [, v] of vals.entries()) {
@@ -147,7 +147,7 @@ test('first set index', async t => {
 })
 
 test('empty CID stability', async t => {
-  const bs = memstore()
+  const bs = new MemCborStore()
   const a = new AMT<string>(bs)
 
   const c1 = await a.flush()
@@ -169,7 +169,7 @@ test('empty CID stability', async t => {
 })
 
 test('bad bitfield', async t => {
-  const bs = memstore()
+  const bs = new MemCborStore()
   const subnode = await bs.put(new internal.Node(new Uint8Array()).encodeCBOR())
 
   const root = new internal.Root(bitWidth, 10n, 10n, new internal.Node(new Uint8Array([255])))

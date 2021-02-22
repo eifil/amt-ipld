@@ -1,11 +1,11 @@
 import test from 'ava'
+import { MemCborStore } from '@eifil/ipld-cbor'
 import { Root as AMT } from '../root.js'
 import { assertGet, assertSize } from '../__helpers__/asserts.js'
-import { memstore } from '../__helpers__/memstore.js'
 import { randInt } from '../__helpers__/random.js'
 
 test('entries', async t => {
-  const bs = memstore()
+  const bs = new MemCborStore()
   const a = new AMT<string>(bs)
 
   const indexes = []
@@ -39,7 +39,7 @@ test('entries', async t => {
 })
 
 test('entries without flush', async t => {
-  const bs = memstore()
+  const bs = new MemCborStore()
 
   for (const indexes of [
     [0n, 1n, 2n, 3n, 4n, 5n, 6n, 7n],

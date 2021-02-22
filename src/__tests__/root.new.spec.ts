@@ -1,13 +1,13 @@
 import test from 'ava'
+import { MemCborStore } from '@eifil/ipld-cbor'
 import { DEFAULT_BIT_WIDTH, Root as AMT } from '../root.js'
 import { assertEquals, assertSize } from '../__helpers__/asserts.js'
-import { memstore } from '../__helpers__/memstore.js'
 
 const bitWidth = DEFAULT_BIT_WIDTH
 const numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 test('from array', async t => {
-  const bs = memstore()
+  const bs = new MemCborStore()
   const c = await AMT.fromArray(bs, numbers)
   const a = await AMT.load(bs, c)
   await assertEquals(t, a, numbers)
@@ -15,7 +15,7 @@ test('from array', async t => {
 })
 
 test('default config', async t => {
-  const bs = memstore()
+  const bs = new MemCborStore()
   const a = new AMT(bs)
   t.is(a.bitWidth, bitWidth)
 
@@ -25,7 +25,7 @@ test('default config', async t => {
 })
 
 test('explicit bitwidth', async t => {
-  const bs = memstore()
+  const bs = new MemCborStore()
   const a = new AMT(bs, { bitWidth: 4 })
   t.is(a.bitWidth, 4)
 

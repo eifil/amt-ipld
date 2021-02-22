@@ -1,9 +1,9 @@
 import test from 'ava'
+import { MemCborStore } from '@eifil/ipld-cbor'
 import { Root as AMT } from '../root.js'
-import { memstore } from '../__helpers__/memstore.js'
 
 test('invalid height empty', async t => {
-  const bs = memstore()
+  const bs = new MemCborStore()
   const a = new AMT<string>(bs)
   Object.assign(a, { height: 1n })
   const c = await a.flush()
@@ -11,7 +11,7 @@ test('invalid height empty', async t => {
 })
 
 test('invalid height single', async t => {
-  const bs = memstore()
+  const bs = new MemCborStore()
   const a = new AMT<string>(bs)
   await a.set(0n, '')
   Object.assign(a, { height: 1n })
@@ -20,7 +20,7 @@ test('invalid height single', async t => {
 })
 
 test('invalid height tall', async t => {
-  const bs = memstore()
+  const bs = new MemCborStore()
   const a = new AMT<string>(bs)
   await a.set(15n, '')
 

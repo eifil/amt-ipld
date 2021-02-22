@@ -34,11 +34,10 @@
   },
   "homepage": "https://github.com/eifil/amt-ipld#readme",
   "dependencies": {
+    "@eifil/ipld-cbor": "^0.0.1",
     "multiformats": "^4.5.0"
   },
   "devDependencies": {
-    "@ipld/dag-cbor": "^3.0.0",
-    "@multiformats/blake2": "^0.0.0",
     "@typescript-eslint/eslint-plugin": "^4.14.1",
     "@typescript-eslint/parser": "^4.14.1",
     "ava": "^3.15.0",

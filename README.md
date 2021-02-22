@@ -16,16 +16,7 @@ npm install @eifil/amt-ipld
 
 ## Usage
 
-The AMT requires a `store` that complies with the following interface:
-
-```ts
-import { CID } from 'multiformats'
-
-interface IpldStore {
-  get<V = any> (c: CID): Promise<V | undefined>
-  put (v: any): Promise<CID>
-}
-```
+The AMT requires a `store` that complies with [`IpldStore`](https://github.com/eifil/ipld-cbor/blob/b269c90a8b0c8b5a7b3dc4b0ab832d6ded5f018c/src/store.ts#L11-L14).
 
 ### Create a new empty AMT
 

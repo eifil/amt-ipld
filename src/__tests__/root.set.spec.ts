@@ -1,11 +1,11 @@
 import test from 'ava'
+import { MemCborStore } from '@eifil/ipld-cbor'
 import { Root as AMT } from '../root.js'
 import { assertDelete, assertGet, assertSet, assertSize } from '../__helpers__/asserts.js'
-import { memstore } from '../__helpers__/memstore.js'
 import { randInt, shuffle } from '../__helpers__/random.js'
 
 test('insert a bunch', async t => {
-  const bs = memstore()
+  const bs = new MemCborStore()
   const a = new AMT<string>(bs)
 
   const num = 5000n
@@ -29,7 +29,7 @@ test('insert a bunch', async t => {
 })
 
 test('insert a bunch with delete', async t => {
-  const bs = memstore()
+  const bs = new MemCborStore()
   const a = new AMT<string>(bs)
 
   const num = 12000
@@ -85,7 +85,7 @@ test('insert a bunch with delete', async t => {
 })
 
 test('set order independent', async t => {
-  const bs = memstore()
+  const bs = new MemCborStore()
   const a = new AMT<string>(bs)
 
   const nKeys = 8 * 8 * 8 * 8

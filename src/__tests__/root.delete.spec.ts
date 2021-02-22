@@ -1,11 +1,11 @@
 import test from 'ava'
+import { MemCborStore } from '@eifil/ipld-cbor'
 import { Root as AMT } from '../root.js'
 import { assertDelete, assertGet, assertSet, assertSize } from '../__helpers__/asserts.js'
-import { memstore } from '../__helpers__/memstore.js'
 import { randInt, shuffle } from '../__helpers__/random.js'
 
 test('delete first entry', async t => {
-  const bs = memstore()
+  const bs = new MemCborStore()
   const a = new AMT<string>(bs)
 
   await assertSet(t, a, 0n, 'cat')
@@ -20,7 +20,7 @@ test('delete first entry', async t => {
 })
 
 test('delete', async t => {
-  const bs = memstore()
+  const bs = new MemCborStore()
   const a = new AMT<string>(bs)
 
   // Check that deleting out of range of the current AMT returns not found
@@ -65,7 +65,7 @@ test('delete', async t => {
 })
 
 test('delete reduce height', async t => {
-  const bs = memstore()
+  const bs = new MemCborStore()
   const a = new AMT<string>(bs)
 
   await assertSet(t, a, 1n, 'thing')
@@ -85,7 +85,7 @@ test('delete reduce height', async t => {
 })
 
 test('delete order independent', async t => {
-  const bs = memstore()
+  const bs = new MemCborStore()
   const a = new AMT<string>(bs)
 
   const nKeys = 8 * 8 * 8 * 8

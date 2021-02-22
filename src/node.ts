@@ -1,7 +1,7 @@
+import { CborDecoder, IpldStore } from '@eifil/ipld-cbor'
 import { EmptyNodeError, LeafExpectedError, LeafUnexpectedError, LinksAndValuesError, NoValuesError, UndefinedCIDError } from './errors.js'
 import * as internal from './internal.js'
 import { Link } from './link.js'
-import { CBORDecoder, IpldStore } from './types.js'
 import { nodesForHeight } from './util.js'
 
 /**
@@ -28,9 +28,9 @@ function bmapBytes (bitWidth: number): number {
 export class Node<V> {
   links: Link<V>[] = []
   values: V[] = []
-  private readonly decoder?: CBORDecoder<V>
+  private readonly decoder?: CborDecoder<V>
 
-  constructor (links: Link<V>[] = [], decoder?: CBORDecoder<V>) {
+  constructor (links: Link<V>[] = [], decoder?: CborDecoder<V>) {
     this.links = links
     this.decoder = decoder
   }
@@ -41,7 +41,7 @@ export class Node<V> {
    * arrays, while node uses the expanded form. This method performs the expansion
    * such that we can use simple addressing of this node's child elements.
    */
-  static fromInternal<V> (nd: internal.Node, bitWidth: number, allowEmpty: boolean, expectLeaf: boolean, decoder?: CBORDecoder<V>): Node<V> {
+  static fromInternal<V> (nd: internal.Node, bitWidth: number, allowEmpty: boolean, expectLeaf: boolean, decoder?: CborDecoder<V>): Node<V> {
     if (nd.links.length && nd.values.length) {
       // malformed AMT, a node cannot be both leaf and non-leaf
       throw new LinksAndValuesError()

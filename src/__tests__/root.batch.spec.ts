@@ -1,15 +1,14 @@
 import anyTest, { TestInterface } from 'ava'
 import { CID } from 'multiformats'
+import { IpldStore, MemCborStore } from '@eifil/ipld-cbor'
 import { Root as AMT } from '../root.js'
-import { memstore } from '../__helpers__/memstore.js'
 import { assertEquals } from '../__helpers__/asserts.js'
-import { IpldStore } from '../types.js'
 
 const test = anyTest as TestInterface<{ bs: IpldStore, a: AMT<number>, c: CID }>
 const numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 test.before(async t => {
-  t.context.bs = memstore()
+  t.context.bs = new MemCborStore()
   t.context.a = new AMT<number>(t.context.bs)
   await t.context.a.batchSet(numbers)
   await assertEquals(t, t.context.a, numbers)

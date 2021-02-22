@@ -1,9 +1,9 @@
 import { CID } from 'multiformats'
+import { CborDecoder, IpldStore } from '@eifil/ipld-cbor'
 import * as internal from './internal.js'
 import { Node } from './node.js'
 import { MAX_UINT64 } from './constants.js'
 import { nodesForHeight } from './util.js'
-import { CBORDecoder, IpldStore } from './types.js'
 import { Link } from './link.js'
 import { InvalidCountError } from './errors.js'
 
@@ -16,7 +16,7 @@ export const DEFAULT_BIT_WIDTH = 3
 
 export type Options<V> = {
   bitWidth?: number
-  decoder?: CBORDecoder<V>
+  decoder?: CborDecoder<V>
 }
 
 /**
